@@ -1,32 +1,13 @@
-'Use client';
-import React from 'react';
-import {Card} from 'primereact/card';
-import {Breadcrumb} from 'primereact/breadcrumb';
+// src/app/pages/users/page.js
+import UserTable from "./UserTable";
 
+export default async function UsersPage() {
+  // Example user data (normally fetched from DB/API)
+  const users = [
+    { id: 1, name: "Ali Rahman", email: "ali@example.com", role: "ADMIN" },
+    { id: 2, name: "Sara Ahmed", email: "sara@example.com", role: "HOSTER" },
+    { id: 3, name: "Omar Khalid", email: "omar@example.com", role: "CUSTOMER" },
+  ];
 
-export default function UsersPage() {
-    return (
-        <div>
-        <h1>Users Page</h1>
-        <p>gyuj</p>
-        </div>
-    // const items = [
-       
-    //     {label:'Admin',icon:'pi-pi-users'},{label:'Users'},
-        
-    // ];
-    // const home = {icon:'pi-pi-home', url:'/pages/dashboard'};
-    // return (
-    //    <div className="card">
-
-    //     {/* <Card title="Users"> */}
-    //         <Breadcrumb model={items} home={home}/>
-    //         <h1>Users Page</h1>
-    //         <p>gyuj</p>
-
-            
-    //     </Card>
-
-    //    </div>
-    );
-    }
+  return <UserTable users={users} />;
+}

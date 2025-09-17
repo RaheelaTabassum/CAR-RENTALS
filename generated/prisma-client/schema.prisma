@@ -10,12 +10,15 @@ datasource db {
 
 enum role {
   ADMIN
+  HOSTER
+  CUSTOMER
 }
 
 model users {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   username  String   @unique
+  email_id  String?
   password  String
   role_id   role
   is_active Boolean  @default(true)

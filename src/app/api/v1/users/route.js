@@ -13,25 +13,32 @@ export async function GET() {
     const users = await prisma.users.findMany({
       select: {
         id: true,
-        name: true,
         username: true,
+        email_id: true,
+        name: true,
         role_id: true,
+        is_active:true,
+        createdAt: true,
       },
     });
-    return NextResponse.json(users);
+    return NextResponse.json(users, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || "Failed to fetch users" },
+      { status: 500 }
+    );
   }
 }
 
 /**
  * POST /api/v1/users
- * Create a new user
+ * Add a new user
  */
 export async function POST(request) {
   try {
     const data = await request.json();
 
+    // check if username already exists
     const exists = await prisma.users.findUnique({
       where: { username: data.username },
     });
@@ -42,69 +49,34 @@ export async function POST(request) {
       );
     }
 
+    // hash password
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const user = await prisma.users.create({
+    // create new user
+    const newUser = await prisma.users.create({
       data: {
         name: data.name,
         username: data.username,
+        email_id: data.email_id || null, // make it optional
         password: hashedPassword,
-        role_id: data.role_id,
+        role_id: data.role_id || "CUSTOMER",
       },
       select: {
         id: true,
         name: true,
         username: true,
+        email_id: true,
         role_id: true,
+        createdAt: true,
+        
       },
     });
 
-    return NextResponse.json(user, { status: 201 });
+    return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
-}
-
-/**
- * PUT /api/v1/users
- * Update user details
- */
-export async function PUT(request) {
-  try {
-    const { id, password, ...rest } = await request.json();
-    let updateData = { ...rest };
-
-    if (password) {
-      updateData.password = await bcrypt.hash(password, 10);
-    }
-
-    const user = await prisma.users.update({
-      where: { id },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        role_id: true,
-      },
-    });
-
-    return NextResponse.json(user);
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
-}
-
-/**
- * DELETE /api/v1/users
- * Delete a user
- */
-export async function DELETE(request) {
-  try {
-    const { id } = await request.json();
-    await prisma.users.delete({ where: { id } });
-    return NextResponse.json({ message: "User deleted successfully" });
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json(
+      { error: error.message || "Failed to create user" },
+      { status: 400 }
+    );
   }
 }

@@ -7,19 +7,21 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-6 p-6">
-      {cards.map((card, index) => (
-        <div
-          key={index}
-          className="p-6 bg-white border rounded-xl shadow-md hover:shadow-lg"
-        >
-          <h2 className="text-lg font-bold">{card.title}</h2>
-          <p>{card.description}</p>
-          <p className="mt-2 text-sm text-gray-600">
-            <b>Total:</b> {card.total}
-          </p>
-        </div>
-      ))}
+    <div className="min-h-screen bg-white p-6 text-black">
+      <div className="grid grid-cols-4 gap-6">
+        {cards.map((card, index) => (
+          <div
+            key={index}
+            className="p-6 bg-white border border-gray-300 rounded-xl shadow-md hover:shadow-lg text-black"
+          >
+            <h2 className="text-lg font-bold">{card.title}</h2>
+            <p>{card.description}</p>
+            <p className="mt-2 text-sm">
+              <b>Total:</b> {card.total}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

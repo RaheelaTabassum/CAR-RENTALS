@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState(""); // 🔹 changed
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
@@ -18,7 +18,6 @@ export default function LoginPage() {
     }
 
     try {
-      // 🔹 Hit the auth API with username instead of email
       const res = await fetch("/api/v1/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -26,25 +25,17 @@ export default function LoginPage() {
       });
 
       const body = await res.json();
+
       if (!res.ok) {
         setError(body.message || "Login failed");
         return;
       }
 
-      const token = body.data; // ✅ token from payload
+      const token = body.data;
 
-      // ✅ Store token in multiple places
-      try {
-        localStorage.setItem("token", token);
-      } catch {}
-      try {
-        sessionStorage.setItem("token", token);
-      } catch {}
+      localStorage.setItem("token", token);
+      sessionStorage.setItem("token", token);
 
-      // If Redux is used:
-      // dispatch(authActions.setToken(token));
-
-      // Cookie is already set by backend → middleware works
       router.push("/pages/dashboard");
     } catch {
       setError("Something went wrong!");
@@ -52,46 +43,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      style={{
-        background: "#f0f4fa17",
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "350px",
-          width: "100%",
-          background: "#fff",
-          borderRadius: "12px",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-          padding: "32px 24px",
-        }}
-      >
-        <h2 style={{ textAlign: "center", color: "#2a5298", marginBottom: 24 }}>
+    <div className="flex min-h-screen items-center justify-center bg-white">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-lg">
+        <h2
+          className="mb-6 text-center text-3xl font-bold"
+          style={{ color: "#8e6aa7" }}
+        >
           Login
         </h2>
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: 16 }}>
-            {error && (
-              <div
-                style={{
-                  background: "#f8d7da",
-                  color: "#721c24",
-                  padding: "10px",
-                  borderRadius: 6,
-                  marginBottom: 16,
-                }}
-              >
-                {error}
-              </div>
-            )}
+
+        {error && (
+          <div
+            className="mb-4 rounded-md p-2 text-sm"
+            style={{ backgroundColor: "#f8d7da", color: "#721c24" }}
+          >
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
             <label
               htmlFor="username"
-              style={{ display: "block", marginBottom: 6, color: "#1e3c72" }}
+              className="mb-1 block text-sm font-medium"
+              style={{ color: "#8e6aa7" }}
             >
               Username
             </label>
@@ -100,21 +75,20 @@ export default function LoginPage() {
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              required
+              className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
               style={{
-                width: "100%",
-                padding: "8px 12px",
-                borderRadius: 6,
-                border: "1px solid #b0b8c1",
-                outline: "none",
-                fontSize: 16,
+                borderColor: "#8e6aa7",
+                color: "#8e6aa7",
               }}
+              required
             />
           </div>
-          <div style={{ marginBottom: 20 }}>
+
+          <div>
             <label
               htmlFor="password"
-              style={{ display: "block", marginBottom: 6, color: "#1e3c72" }}
+              className="mb-1 block text-sm font-medium"
+              style={{ color: "#8e6aa7" }}
             >
               Password
             </label>
@@ -123,54 +97,38 @@ export default function LoginPage() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
+              className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
               style={{
-                width: "100%",
-                padding: "8px 12px",
-                borderRadius: 6,
-                border: "1px solid #b0b8c1",
-                outline: "none",
-                fontSize: 16,
+                borderColor: "#8e6aa7",
+                color: "#8e6aa7",
               }}
+              required
             />
           </div>
+
           <button
             type="submit"
+            className="w-full rounded-md px-4 py-2 font-semibold transition"
             style={{
-              width: "100%",
-              padding: "10px 0",
-              background: "linear-gradient(90deg, #1e3c72 0%, #2a5298 100%)",
-              color: "#fffffff5",
-              border: "none",
-              borderRadius: 6,
-              fontWeight: 600,
-              fontSize: 16,
-              cursor: "pointer",
+              backgroundColor: "#8e6aa7",
+              color: "white",
             }}
           >
             Login
           </button>
-          <div style={{ marginTop: 24, textAlign: "center" }}>
-            <span style={{ color: "#1e3c72" }}>If new user, </span>
-            <button
-              type="button"
-              onClick={() => router.push("/admin/signup")}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#2a5298",
-                textDecoration: "underline",
-                cursor: "pointer",
-                fontWeight: 600,
-                fontSize: 16,
-                padding: 0,
-                marginLeft: 4,
-              }}
-            >
-              Signup
-            </button>
-          </div>
         </form>
+
+        <div className="mt-6 text-center text-sm">
+          <span style={{ color: "#8e6aa7" }}>New user? </span>
+          <button
+            type="button"
+            onClick={() => router.push("/admin/signup")}
+            className="font-semibold hover:underline"
+            style={{ color: "#8e6aa7" }}
+          >
+            Signup
+          </button>
+        </div>
       </div>
     </div>
   );

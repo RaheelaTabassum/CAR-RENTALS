@@ -1,11 +1,4 @@
 {
   "version": 2,
-  "buildCommand": "npx prisma generate && npm run build",
-  "outputFileTracingIncludes": {
-    "api/**": [
-      "node_modules/.prisma/client",
-      "node_modules/@prisma/client",
-      "prisma/schema.prisma"
-    ]
-  }
+  "buildCommand": "npm run build"
 }

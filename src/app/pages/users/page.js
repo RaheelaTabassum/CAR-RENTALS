@@ -17,18 +17,25 @@ export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Add User Sidebar
-  const [showSidebar, setShowSidebar] = useState(false);
-
-  // Edit User Sidebar
+  // Sidebar states
+  const [showAddSidebar, setShowAddSidebar] = useState(false);
   const [showEditSidebar, setShowEditSidebar] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
 
+  // Form states
   const [form, setForm] = useState({
     name: "",
     username: "",
     email_id: "",
     password: "",
+    role_id: "CUSTOMER",
+    is_active: true,
+  });
+
+  const [editForm, setEditForm] = useState({
+    id: "",
+    name: "",
+    username: "",
+    email_id: "",
     role_id: "CUSTOMER",
     is_active: true,
   });
@@ -42,20 +49,16 @@ export default function UsersPage() {
     { label: "Users" },
   ];
 
-  // Filters state
-  const [filters, setFilters] = useState({
-    role_id: null,
-    status: null,
-  });
+  // Filters
+  const [filters, setFilters] = useState({ role_id: null, status: null });
 
-  // Pagination + Sorting state
+  // Pagination + sorting
   const [lazyState, setLazyState] = useState({
     first: 0,
     rows: 5,
     page: 0,
     sortField: null,
     sortOrder: null,
-   
   });
 
   // Fetch users
@@ -64,13 +67,10 @@ export default function UsersPage() {
     try {
       const res = await fetch("/api/v1/users");
       const data = await res.json();
-
-      // Normalize users to include status label
       const normalized = data.map((u) => ({
         ...u,
         status: u.is_active ? "ACTIVE" : "INACTIVE",
       }));
-
       setUsers(normalized);
     } catch (err) {
       console.error(err);
@@ -83,7 +83,7 @@ export default function UsersPage() {
     fetchUsers();
   }, []);
 
-  // Save user
+  // Save new user
   const saveUser = async () => {
     setSaving(true);
     try {
@@ -93,20 +93,13 @@ export default function UsersPage() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) {
-        toast.current.show({
-          severity: "error",
-          summary: "Error",
-          detail: data.error || "Failed to create user",
-        });
-        return;
-      }
+      if (!res.ok) throw new Error(data.error || "Failed to create user");
+
       toast.current.show({
         severity: "success",
         summary: "Success",
         detail: "User added successfully",
       });
-      setShowSidebar(false);
       setForm({
         name: "",
         username: "",
@@ -116,51 +109,50 @@ export default function UsersPage() {
         is_active: true,
       });
       fetchUsers();
+      setShowAddSidebar(false);
     } catch (err) {
-      console.error(err);
       toast.current.show({
         severity: "error",
         summary: "Error",
-        detail: "Something went wrong",
+        detail: err.message,
       });
     } finally {
       setSaving(false);
     }
   };
 
-  // Update user (Edit)
+  // Update user
   const updateUser = async () => {
-    if (!selectedUser) return;
-
     setSaving(true);
     try {
-      const res = await fetch(`/api/v1/users/${selectedUser.id}`, {
+      const res = await fetch(`/api/v1/users/${editForm.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(selectedUser),
+        body: JSON.stringify(editForm),
       });
       const data = await res.json();
-      if (!res.ok) {
-        toast.current.show({
-          severity: "error",
-          summary: "Error",
-          detail: data.error || "Failed to update user",
-        });
-        return;
-      }
+      if (!res.ok) throw new Error(data.error || "Failed to update user");
+
       toast.current.show({
         severity: "success",
         summary: "Success",
         detail: "User updated successfully",
       });
-      setShowEditSidebar(false);
+      setEditForm({
+        id: "",
+        name: "",
+        username: "",
+        email_id: "",
+        role_id: "CUSTOMER",
+        is_active: true,
+      });
       fetchUsers();
+      setShowEditSidebar(false);
     } catch (err) {
-      console.error(err);
       toast.current.show({
         severity: "error",
         summary: "Error",
-        detail: "Something went wrong",
+        detail: err.message,
       });
     } finally {
       setSaving(false);
@@ -172,22 +164,18 @@ export default function UsersPage() {
   const activeUsers = users.filter((u) => u.status === "ACTIVE").length;
   const inactiveUsers = users.filter((u) => u.status === "INACTIVE").length;
 
-  const actionBody = (row) => (
-    <div className="flex gap-2">
-      <Button
-        icon="pi pi-pencil"
-        rounded
-        text
-        severity="info"
-        onClick={() => {
-          setSelectedUser(row);
-          setShowEditSidebar(true);
-        }}
-      />
-    </div>
-  );
+  // Dropdown options
+  const roleDropdownOptions = [
+    { label: "Customer", value: "CUSTOMER" },
+    { label: "Admin", value: "ADMIN" },
+    { label: "Hoster", value: "HOSTER" },
+  ];
 
-  // 🔹 Dynamic filter options
+  const statusDropdownOptions = [
+    { label: "Active", value: true },
+    { label: "Inactive", value: false },
+  ];
+
   const roleOptions = [...new Set(users.map((u) => u.role_id))].map((r) => ({
     label: r,
     value: r,
@@ -197,27 +185,12 @@ export default function UsersPage() {
     value: s,
   }));
 
-  const roleDropdownOptions = [
-    { label: "Customer", value: "CUSTOMER" },
-    { label: "Admin", value: "ADMIN" },
-    { label: "hoster", value: "HOSTER" },
-  ];
-
-  const statusDropdownOptions = [
-    { label: "Active", value: true },
-    { label: "Inactive", value: false },
-  ];
-
-  // 🔹 Apply filters
+  // Apply filters
   const filteredUsers = users.filter((u) => {
     const roleMatch =
-      !filters.role_id ||
-      filters.role_id.length === 0 ||
-      filters.role_id.includes(u.role_id);
+      !filters.role_id || filters.role_id.length === 0 || filters.role_id.includes(u.role_id);
     const statusMatch =
-      !filters.status ||
-      filters.status.length === 0 ||
-      filters.status.includes(u.status);
+      !filters.status || filters.status.length === 0 || filters.status.includes(u.status);
     return roleMatch && statusMatch;
   });
 
@@ -229,15 +202,24 @@ export default function UsersPage() {
       <Card className="shadow-2 mb-4">
         <div className="flex justify-between items-center mb-3">
           <BreadCrumb model={breadcrumbItems} />
-          <Button
-            label="Add User"
-            icon="pi pi-plus"
-            className="p-button-sm p-button-primary"
-            onClick={() => setShowSidebar(true)}
-          />
+
+          {/* Buttons stacked on right */}
+          <div className="flex flex-col gap-2">
+            <Button
+              label="Add User"
+              icon="pi pi-plus"
+              className="p-button-success"
+              onClick={() => setShowAddSidebar(true)}
+            />
+            <Button
+              label="Edit User"
+              icon="pi pi-user-edit"
+              className="p-button-warning"
+              onClick={() => setShowEditSidebar(true)}
+            />
+          </div>
         </div>
 
-        {/* User Stats */}
         <div className="flex gap-4 mt-3">
           <div className="p-3 bg-gray-100 rounded text-center">
             <div className="text-sm text-gray-600">Total Users</div>
@@ -257,7 +239,6 @@ export default function UsersPage() {
       {/* Users Table */}
       <Card title="Users List">
         <div className="flex gap-4 mb-3">
-          {/* Role Filter */}
           <MultiSelect
             value={filters.role_id}
             options={roleOptions}
@@ -266,8 +247,6 @@ export default function UsersPage() {
             display="chip"
             className="w-60"
           />
-
-          {/* Status Filter */}
           <MultiSelect
             value={filters.status}
             options={statusOptions}
@@ -284,27 +263,28 @@ export default function UsersPage() {
           paginator
           rows={lazyState.rows}
           first={lazyState.first}
-          onPage={(e) => {console.log(e); setLazyState(e)}}
+          onPage={(e) => setLazyState(e)}
           rowsPerPageOptions={[5, 10, 20]}
           sortField={lazyState.sortField}
           sortOrder={lazyState.sortOrder}
           onSort={(e) => setLazyState(e)}
           tableStyle={{ minWidth: "40rem" }}
+          selectionMode="single"
+          selection={editForm}
+          onSelectionChange={(e) => setEditForm(e.value)}
         >
-          <Column field="username" header="Username" sortable></Column>
-          <Column field="email_id" header="Email" sortable></Column>
-          <Column field="role_id" header="Role" sortable></Column>
-          <Column field="status" header="Status" sortable></Column>
-          <Column header="Action" body={actionBody}></Column>
+          <Column field="username" header="Username" sortable />
+          <Column field="email_id" header="Email" sortable />
+          <Column field="role_id" header="Role" sortable />
+          <Column field="status" header="Status" sortable />
         </DataTable>
       </Card>
 
-      {/* Sidebar for Add User */}
+      {/* Add User Sidebar */}
       <Sidebar
-        visible={showSidebar}
+        visible={showAddSidebar}
         position="right"
-        onHide={() => setShowSidebar(false)}
-        baseZIndex={1000}
+        onHide={() => setShowAddSidebar(false)}
         style={{ width: "30rem" }}
       >
         <h2 className="mb-4 text-xl font-bold">Add New User</h2>
@@ -336,6 +316,12 @@ export default function UsersPage() {
             onChange={(e) => setForm({ ...form, role_id: e.value })}
             placeholder="Select Role"
           />
+          <Dropdown
+            value={form.is_active}
+            options={statusDropdownOptions}
+            onChange={(e) => setForm({ ...form, is_active: e.value })}
+            placeholder="Select Status"
+          />
           <Button
             label={saving ? "Saving..." : "Save"}
             className="p-button-success mt-3"
@@ -345,47 +331,49 @@ export default function UsersPage() {
         </div>
       </Sidebar>
 
-      {/* Sidebar for Edit User */}
+      {/* Edit User Sidebar */}
       <Sidebar
         visible={showEditSidebar}
         position="right"
         onHide={() => setShowEditSidebar(false)}
-        baseZIndex={1000}
         style={{ width: "30rem" }}
       >
         <h2 className="mb-4 text-xl font-bold">Edit User</h2>
-        {selectedUser && (
-          <div className="flex flex-col gap-3">
-            <InputText
-              placeholder="Name"
-              value={selectedUser.name}
-              onChange={(e) =>
-                setSelectedUser({ ...selectedUser, name: e.target.value })
-              }
-            />
-            <InputText
-              placeholder="Email"
-              value={selectedUser.email_id}
-              onChange={(e) =>
-                setSelectedUser({ ...selectedUser, email_id: e.target.value })
-              }
-            />
-            <Dropdown
-              value={selectedUser.is_active}
-              options={statusDropdownOptions}
-              onChange={(e) =>
-                setSelectedUser({ ...selectedUser, is_active: e.value })
-              }
-              placeholder="Select Status"
-            />
-            <Button
-              label={saving ? "Updating..." : "Update"}
-              className="p-button-info mt-3"
-              onClick={updateUser}
-              disabled={saving}
-            />
-          </div>
-        )}
+        <div className="flex flex-col gap-3">
+          <InputText
+            placeholder="Name"
+            value={editForm.name}
+            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+          />
+          <InputText
+            placeholder="Username"
+            value={editForm.username}
+            onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+          />
+          <InputText
+            placeholder="Email"
+            value={editForm.email_id}
+            onChange={(e) => setEditForm({ ...editForm, email_id: e.target.value })}
+          />
+          <Dropdown
+            value={editForm.role_id}
+            options={roleDropdownOptions}
+            onChange={(e) => setEditForm({ ...editForm, role_id: e.value })}
+            placeholder="Select Role"
+          />
+          <Dropdown
+            value={editForm.is_active}
+            options={statusDropdownOptions}
+            onChange={(e) => setEditForm({ ...editForm, is_active: e.value })}
+            placeholder="Select Status"
+          />
+          <Button
+            label={saving ? "Updating..." : "Update"}
+            className="p-button-warning mt-3"
+            onClick={updateUser}
+            disabled={saving}
+          />
+        </div>
       </Sidebar>
     </div>
   );

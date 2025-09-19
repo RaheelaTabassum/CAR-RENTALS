@@ -1,13 +1,9 @@
+// src/app/api/v1/users/route.js
 import { NextResponse } from "next/server";
-import { PrismaClient } from "../../../../../generated/prisma-client";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
-
-/**
- * GET /api/v1/users
- * Fetch all users (excluding password)
- */
+// GET all users
 export async function GET() {
   try {
     const users = await prisma.users.findMany({
@@ -17,11 +13,11 @@ export async function GET() {
         email_id: true,
         name: true,
         role_id: true,
-        is_active:true,
+        is_active: true,
         createdAt: true,
       },
     });
-    return NextResponse.json(users, { status: 200 });
+    return NextResponse.json(users);
   } catch (error) {
     return NextResponse.json(
       { error: error.message || "Failed to fetch users" },
@@ -30,34 +26,30 @@ export async function GET() {
   }
 }
 
-/**
- * POST /api/v1/users
- * Add a new user
- */
-export async function POST(request) {
+// POST new user
+export async function POST(req) {
   try {
-    const data = await request.json();
+    const data = await req.json();
 
-    // check if username already exists
+    // Check if username already exists
     const exists = await prisma.users.findUnique({
       where: { username: data.username },
     });
-    if (exists) {
+    if (exists)
       return NextResponse.json(
         { error: "Username already exists" },
         { status: 400 }
       );
-    }
 
-    // hash password
+    // Hash password
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // create new user
+    // Create user
     const newUser = await prisma.users.create({
       data: {
         name: data.name,
         username: data.username,
-        email_id: data.email_id || null, // make it optional
+        email_id: data.email_id || null,
         password: hashedPassword,
         role_id: data.role_id || "CUSTOMER",
       },
@@ -68,7 +60,6 @@ export async function POST(request) {
         email_id: true,
         role_id: true,
         createdAt: true,
-        
       },
     });
 
@@ -77,6 +68,7 @@ export async function POST(request) {
     return NextResponse.json(
       { error: error.message || "Failed to create user" },
       { status: 400 }
-    );
+    );3
+    3/+-[]
   }
 }
